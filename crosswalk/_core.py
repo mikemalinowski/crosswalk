@@ -34,6 +34,16 @@ APIS = dict()
 
 
 # ------------------------------------------------------------------------------
+def hosts():
+    """
+    Returns a list of available hosts
+
+    :return:
+    """
+    return HOSTS
+
+
+# ------------------------------------------------------------------------------
 def reroute(func):
     """
     This is a decorator which will dynamically reroute the function 
@@ -174,6 +184,10 @@ class UndefinedRouting(object):
 
                 return dynamic_function
 
+
     @classmethod
     def setup(cls, module_name):
         sys.modules[module_name] = cls(sys.modules[module_name])
+
+    def __dir__(self):
+        return dir(self.wrapped)

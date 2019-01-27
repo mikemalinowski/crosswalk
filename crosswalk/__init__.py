@@ -22,4 +22,10 @@ As with any abstract layer there is a cost of implementation.
 from ._core import reroute
 from ._core import UndefinedRouting
 
+# -- These are functions used to help generate
+# -- hosts
+from ._generate import generate
+
+# -- This is the list of modules exposed as part
+# -- of the stanard api
 from . import example

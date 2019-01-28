@@ -48,6 +48,34 @@ crosswalk.constraints.transformConstraint(obj_a, obj_b)
 When calling the code you do not need to call the direct modo/houdini
 implementation as all the rerouting is dynamic.
 
+You can start playing with this code by downloading the project and
+running this:
+```
+import crosswalk
+
+# -- Call a function to multiply a number. Notice that
+# -- this prints that its running from the chalk implementation
+# -- as its the first host that is viable within the interpreter
+value = crosswalk.example.mul(10)
+
+# -- We can specify a specific implementation if we want
+# -- to - for situations where multiple implementations are
+# -- importable from within the same interpreter
+value = crosswalk.example.mul(10, xapi='cheese')
+
+# -- If we know the host we're working with, we can also
+# -- call functions which are not declared in the Standard
+# -- API (over-implementing).
+crosswalk.example.crumble()
+```
+
+This example shows that we do not need to declare which host to 
+utilise, meaning we can easily copy/paste code between different
+embedded interpreters and have that code operate correctly.
+
+Because all the hosts are sub-packages, crosswalk becomes a sole
+abstract for the API, which all the hosts must follow.
+
 Specified Host
 ==============
 
@@ -163,6 +191,26 @@ we utilise to redirect. Within **crosswalk** is a *_timings.py* module
 which can be executed to get an idea of what this cost might be within
 your desired host.
 
+Host Generation
+===============
+
+As an API grows it can become cumbersome to create a new API. To help
+this process there is a generate function which will create the layout
+of all the required files for the host and place in each required 
+function which is expected to be implemented. 
+
+To do this, use this code:
+
+```
+import crosswalk
+
+crosswalk.generate('my_name')
+```
+
+This will create a folder with the name you give directly under the 
+hosts directory, and place mimic of the required .py files within it. Each
+.py file will contain all the required functions that you're expected
+to fullfil. 
 
 Contribute
 ==========

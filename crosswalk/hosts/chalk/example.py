@@ -10,6 +10,7 @@ def mul(count):
      
     :return: Value of multiplication 
     """
+    print('Running from chalk')
     counter = 0
     for i in range(count):
         counter *= i
@@ -17,7 +18,7 @@ def mul(count):
 
 
 # ------------------------------------------------------------------------------
-def bespoke_mul(count):
+def crumble():
     """
     Note - this function is NOT declared in the Standard API. Therefore
     it would not be considered a 'normal' function to call through a 
@@ -29,7 +30,5 @@ def bespoke_mul(count):
     :param count: 
     :return: 
     """
-    counter = 0
-    for i in range(count):
-        counter *= i
-    return counter
+    print('running a function implemented only in chalk')
+    return None

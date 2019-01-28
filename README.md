@@ -48,6 +48,47 @@ crosswalk.constraints.transformConstraint(obj_a, obj_b)
 When calling the code you do not need to call the direct modo/houdini
 implementation as all the rerouting is dynamic.
 
+Specified Host
+==============
+
+The default mechanism for Crosswalk is to always utilise the first 
+host which is importable. In the context of Modo and Houdini, this 
+means that you'll always get the Modo utils when in Modo and the 
+Houdini utils when in houdini (because each rely on their own applications
+api, and are therefore not importable within each others embedded
+interpreters).
+
+This works well until you implement multiple hosts for the same
+application. An example of this might be Maya, where some developers
+utilise OpenMaya, others develop using maya.cmds and others also 
+utilise PyMel. In this scenario we could have three different host
+implementations, and all are immediately importable - and therefore
+valid. 
+
+To help solve this we have a special keyword argument which can be
+passed to any function exposed through crosswalk. That kwarg is ```xpa='host_name'```.
+By passing this argument, and specifying the host you want to utilise
+you can direct the re-routing operation to a specific host. An
+example might be:
+
+Using PyMel
+```
+import crosswalk
+import pymel.core as pm
+
+cns = crosswalk.constraints.transformConstraint(pm.selected()[0], xapi='pymel')
+print(type(cns)) # -- pm.nt.parentConstraint
+```
+
+Using Maya.cmds
+```
+import crosswalk
+import maya.cmds
+
+cns = crosswalk.constraints.transformConstraint(maya.cmds.ls(sl=True), xapi='cmds')
+print(type(cns)) # -- str
+```
+
 Over-Implementing
 =================
 

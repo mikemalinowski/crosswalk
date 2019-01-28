@@ -3,9 +3,10 @@ Crosswalk
 
 __Note: This is currently pre-release__
 
-Cross walk is an experimentation into approaches to develop a
+Crosswalk is an experimentation to develop an approach of exposing a
 standardised/common API to interact with from within different
-environments.
+environments - inspired largely by conversations with Lee Dunham (a 
+fantastic Tech Artist and keen driver in this area).
 
 The general idea is that an API is exposed at the crosswalk level,
 where each function which is expected to be implemented is then

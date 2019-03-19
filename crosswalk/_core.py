@@ -16,11 +16,8 @@ HOST_DIR = os.path.join(
 # -- at execution time, so we cache the host list too
 HOSTS = os.listdir(HOST_DIR)
 
-# -- Cache this modules name
-MODULE_NAME = __name__.split('.')[0]
-
 # -- Cache the host package prefix location
-HOST_PREFIX = '%s.hosts.' % MODULE_NAME
+HOST_PREFIX = 'crosswalk.hosts.'
 
 # -- To optimise the dynamic rerouting we cache the routes
 # -- we have found to prevent us from having to do it every
@@ -30,7 +27,16 @@ _REROUTING_CACHE = dict()
 # -- We also cache the active host so we dont have to
 # -- continuously check
 DEFAULT_API = None
-APIS = dict()
+
+
+# ------------------------------------------------------------------------------
+def hosts():
+    """
+    Returns a list of available hosts
+
+    :return:
+    """
+    return HOSTS
 
 
 # ------------------------------------------------------------------------------
@@ -57,81 +63,82 @@ def reroute(func):
         # -- These are our global caches which we need
         # -- writable access to
         global _REROUTING_CACHE
-        global DEFAULT_API
-        global APIS
 
         # -- Check for a bespoke API request. If this function and API
         # -- has already been requested at any point in the interpreters
         # -- life span then this is hte only bit of logic we need before
         # -- attempting to call the mapped function
-        requested_api = kwargs.pop('xapi', DEFAULT_API)
+        requested_api = kwargs.pop('xapi', GetDefaultApi())
 
-        try:
-            # -- Look up the api module by the name
-            expected_api = APIS[requested_api]
+        # -- Get the absolute path to the module containing
+        # -- the desired function
+        rerouted_module_path = 'crosswalk.hosts.' + requested_api + '.' + func.__module__[10:]
 
-            # -- Attempt to call the module. Note that we only
-            host_function = _REROUTING_CACHE[expected_api][func]
+        # -- Now get the absolute path to the actual function
+        # -- in question
+        abs_func_address = rerouted_module_path + '.' + func.__name__
 
-        except KeyError:
+        # -- If the function is not already cached, cache the pointer
+        # -- to it
+        if abs_func_address not in _REROUTING_CACHE:
 
-            # -- To get here we're either dealing with a scenario
-            # -- where none of our API's are loaded (its our first
-            # -- reroute request) or its the first time this function
-            # -- is being called.
-            # -- Start by ensuring the API's are warmed up.
-            if not APIS:
+            # -- Import the module to give us access to the function
+            rerouted_module = __import__(
+                rerouted_module_path,
+                fromlist=[''],
+            )
 
-                # -- Get the sub module name. This we expect
-                # -- to find under the host prefix import
-                func_address = str(func.__module__)
-                module_name = '.' + '.'.join(func_address.split('.')[1:])
+            # -- Get the function/class from the module
+            rerouted_func = getattr(rerouted_module, func.__name__)
 
-                # -- Cycle over each host to find out which ones
-                # -- are available within this environment.
-                for possible_host in HOSTS:
+            # -- Cache it
+            _REROUTING_CACHE[abs_func_address] = rerouted_func
 
-                    # -- Build up a fully qualified import path
-                    host_api_name = HOST_PREFIX + possible_host + module_name
-
-                    # -- If the host api imports we use it, otherwise we
-                    # -- try the next one
-                    try:
-                        APIS[possible_host] = __import__(
-                            host_api_name,
-                            fromlist=[''],
-                        )
-
-                        # -- Take the first loadable as the default API
-                        DEFAULT_API = DEFAULT_API or possible_host
-
-                    except:
-                        continue
-
-            # -- We allow any function to go through a specific
-            # -- api if it is explicitly requested otherwise
-            # -- we simply fall back to the default api
-            expected_api = APIS[requested_api or DEFAULT_API]
-
-            # -- This may be the first time we're asking for something
-            # -- from the api, in which case we initialise a dictionary
-            # -- to store the function mapping within.
-            if expected_api not in _REROUTING_CACHE:
-                _REROUTING_CACHE[expected_api] = dict()
-
-            # -- If for any reason we cannot get the function, we
-            # -- assume its not implemented
-            try:
-                host_function = getattr(expected_api, func.__name__)
-                _REROUTING_CACHE[expected_api][func] = host_function
-
-            except:
-                raise NotImplementedError()
-
-        # -- Run the application implementation
-        return host_function(*args, **kwargs)
+        # -- Utilise the cache to call the function
+        return _REROUTING_CACHE[abs_func_address](*args, **kwargs)
 
     return wrapper
+
+
+# ------------------------------------------------------------------------------
+def GetDefaultApi():
+    """
+    Returns the default api - that is the api which is the first to
+    validly import
+
+    :return: tr
+    """
+    # -- We use a global for this to help performance
+    global DEFAULT_API
+
+    # -- If the global is already set then we do not have
+    # -- to do anything more
+    if DEFAULT_API:
+        return DEFAULT_API
+
+    # -- Cycle over each host to find out which ones
+    # -- are available within this environment.
+    for possible_host in HOSTS:
+
+        # -- Build up a fully qualified import path
+        host_api_name = HOST_PREFIX + possible_host
+
+        # -- If the host api imports we use it, otherwise we
+        # -- try the next one
+        try:
+            __import__(
+                host_api_name,
+                fromlist=[''],
+            )
+
+            # -- Take the first loadable as the default API
+            DEFAULT_API = possible_host
+
+            return DEFAULT_API
+
+        except:
+            print(sys.exc_info())
+            continue
 
 
 # ------------------------------------------------------------------------------
@@ -174,6 +181,10 @@ class UndefinedRouting(object):
 
                 return dynamic_function
 
+
     @classmethod
     def setup(cls, module_name):
         sys.modules[module_name] = cls(sys.modules[module_name])
+
+    def __dir__(self):
+        return dir(self.wrapped)

@@ -1,1 +1,1 @@
-import maxscript
+from pymxs import runtime as mxs

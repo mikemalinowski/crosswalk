@@ -1,15 +1,22 @@
+import os
+import bpy
+
 
 def name():
-    return ""
+    return ".".join(os.path.basename(path()).split(".")[:-1])
+
 
 def path():
-    return ""
+    return bpy.data.filepath
+
 
 def save():
-    return
+    return bpy.ops.wm.save_mainfile()
+
 
 def save_as(filepath):
-    return
+    return bpy.ops.wm.save_as_mainfile(filepath=filepath)
+
 
 def open(filepath, force=False):
-    return
+    return bpy.ops.wm.open_mainfile(filepath=filepath)

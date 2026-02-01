@@ -1,22 +1,6 @@
-
-class HierarchicalObject:
-    """
-    This should never be re-implemented in other applications. This is here to serve
-    as a stand-in object in a standalone environment.
-    """
-
-    ALL_OBJECTS = []
-
-    def __init__(self):
-
-        name = ""
-        parent = ""
-        self.children = list()
-
-        HierarchicalObject.ALL_OBJECTS.append(self)
+from pymxs import runtime as rt
 
 
-# --------------------------------------------------------------------------------------
 def create(name: str, parent=None):
     """
     This should create a "basic" object within the application. A basic object is
@@ -25,26 +9,24 @@ def create(name: str, parent=None):
     The name will be assigned to the object and if a parent is given the object will
     be made a child of that parent.
     """
-    object_ = HierarchicalObject()
-    object_.name = name
-    object_.parent = parent
+    node = rt.Dummy()
+    node.name = name
 
-    return object_
+    if parent:
+        node.parent = get_object(parent)
+
+    return node
 
 
-# --------------------------------------------------------------------------------------
 def exists(object_name):
     """
     This will test whether an object in the scene exists
     """
-    for object_ in HierarchicalObject.ALL_OBJECTS:
-        if object_.name == object_name:
-            return True
-
+    if get_object(object_name):
+        return True
     return False
 
 
-# --------------------------------------------------------------------------------------
 def get_object(object_name: str):
     """
     Given a name, this will return an api specific object. This is variable dependant
@@ -53,15 +35,12 @@ def get_object(object_name: str):
     Note that if you are implementing this in an application you should always test
     whether the object_name is actually already an application object.
     """
-    if isinstance(object_name, HierarchicalObject):
-        return object_name
+    if isinstance(object_name, str):
+        return rt.getNodeByName(object_name)
 
-    for object_ in HierarchicalObject.ALL_OBJECTS:
-        if object_.name == object_name:
-            return object_
+    return object_name
 
 
-# --------------------------------------------------------------------------------------
 def get_name(object_):
     """
     This will return the name for the application object.
@@ -72,24 +51,23 @@ def get_name(object_):
     if isinstance(object_, str):
         return object_
 
-    return object_.name
+    try:
+        return object_.name
+
+    except ValueError:
+        raise ValueError(f"Could not get dependency node for {object_}")
 
 
-# --------------------------------------------------------------------------------------
 def all_objects_with_attribute(attribute_name):
     """
     This should return all objects which have an attribute with the given name
     """
-    results = list()
-
-    for object_ in HierarchicalObject.ALL_OBJECTS:
-        if hasattr(object, attribute_name):
-            results.append(object_)
-
-    return results
+    return [
+        o for o in rt.objects
+        if rt.isProperty(o, attribute_name)
+    ]
 
 
-# --------------------------------------------------------------------------------------
 def get_children(object_):
     """
     This should return all children of the given object
@@ -99,7 +77,6 @@ def get_children(object_):
     return object_.children
 
 
-# --------------------------------------------------------------------------------------
 def get_parent(object_):
     """
     This should return the parent of the given object
@@ -109,18 +86,17 @@ def get_parent(object_):
     return object_.parent
 
 
-# --------------------------------------------------------------------------------------
 def set_parent(object_, parent):
     """
     This should return the parent of the given object
     """
     object_ = get_object(object_)
 
-    object_.parent = parent
+    object_.parent = get_object(parent)
 
-# --------------------------------------------------------------------------------------
+
 def delete(object_):
     """
     This should delete the given object
     """
-    HierarchicalObject.ALL_OBJECTS.remove(object_)
+    rt.delete(get_object(object_))

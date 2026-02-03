@@ -10,58 +10,34 @@ Motionbuilder and Modo.
 * Blender
 * Maya
 * Motion Builder
+* 3dsmax
 * Standalone Python
 
-## Command Reference
+## Usage
+The example below can be run in any of the applications listed above without changing 
+any code. This allows a developer to write cross application tools easily. 
 
-### **Objects**
-```
-app.objects.create(name, parent)
-app.objects.exists(object_name)
-app.objects.get_name(object)
-app.objects.get_object(object_name)
-app.objects.get_parent(object)
-app.objects.get_children(object)
-app.objects.set_parent(object, parent)
-app.objects.all_objects_with_attribute(attribute_name)
-```
-
-### **Attributes**
-```
-app.attributes.get_attribute(object, attribute_name)
-app.attributes.has_attribute(object, attribute_name)
-app.attributes.set_attribute(object, attribute_name, value)
-app.attributes.add_float_attribute(object, attribute_name, value)
-app.attributes.add_string_attribute(object, attribute_name, value)
-```
-
-### **Selection**
-```
-app.selection.select(object)
-app.selection.selected()
-```
-
-## Usage Example
 ```python
-from crosswalk import app
+import crosswalk
 
-# -- Example of creating objects
-a = app.objects.create("a")
-b = app.objects.create("b")
+# -- Create some items
+item_a = crosswalk.items.create("foo")
+item_b = crosswalk.items.create("bar", parent=item_a)
 
-# -- Manipulate the hierarchy
-app.objects.set_parent(b, a)
+# -- Print the hierarchy
+print(f"Parent of {item_b} is {crosswalk.items.get_parent(item_b)}")
+print(f"{item_a} has the following children: {crosswalk.items.get_children(item_a)}")
 
-for child in app.objects.get_children(a):
-    print(app.objects.get_name(child))
-    
-# -- Work with attributes
-app.attributes.add_string_attribute(a, "demo", "this is a demo")
-value = app.attributes.get_attribute(a, "demo")
-print(value)
+# -- Add an attribute and store some information
+crosswalk.attributes.add_string_attribute(item_a, attribute_name="my_attribute", value="foobar")
 
-# -- Interact with the selection
-app.selection.select(a)
-for item in app.selection.selected():
-    print(app.objects.get_name(item))
+# -- Now get the value
+print(f"{item_a}.my_attribute = {crosswalk.attributes.get_value(item_a, attribute_name='my_attribute')}")
+
+# -- Select something in the scene
+selected = crosswalk.selection.select([item_a, item_b])
+
+for item in crosswalk.selection.selected():
+    name = crosswalk.items.get_name(item)
+    print(f"We have selected {name}")
 ```

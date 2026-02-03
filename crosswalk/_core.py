@@ -1,13 +1,20 @@
 import os
-from . import constants as c
 
 from importlib.machinery import SourceFileLoader
 import importlib.util
 
 
+APPS_LOCATION = os.path.join(
+    os.path.dirname(__file__),
+    "apps",
+)
+
+FALLBACK_APP = "standalone"
+
+
 def get_registration_file(app_name):
     return os.path.join(
-        c.APPS_LOCATION,
+        APPS_LOCATION,
         app_name,
         "register.py",
     )
@@ -20,13 +27,13 @@ def resident_apps():
     """
     results = list()
 
-    for app_dir in os.listdir(c.APPS_LOCATION):
+    for app_dir in os.listdir(APPS_LOCATION):
 
         registration_file = get_registration_file(app_dir)
 
         if os.path.exists(registration_file):
 
-            if app_dir == c.FALLBACK_APP:
+            if app_dir == FALLBACK_APP:
                 results.append(
                     app_dir
                 )
@@ -43,10 +50,11 @@ def resident_apps():
 def get_usable_app():
 
     for app_dir in resident_apps():
-
+        print("testing : %s" % app_dir)
         registration_file = get_registration_file(app_dir)
 
         if not os.path.exists(registration_file):
+            print("no reg file")
             continue
 
         try:
@@ -60,6 +68,7 @@ def get_usable_app():
             module_ = _import_from_filepath(f"crosswalk_{app_dir}", registration_file.replace("register.py", "__init__.py"))
 
             if module_:
+                print("got module : %s" % module_name)
                 return module_name
 
         except ImportError:

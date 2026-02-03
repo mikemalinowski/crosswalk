@@ -1,83 +1,110 @@
+import typing
 from pymxs import runtime as mxs
 
+from . import items
 
-def add_string_attribute(object_, attribute_name, value):
+
+def add_string_attribute(item: object, attribute_name: str, value: typing.Any) -> None:
     """
-    This should add an attribute to the object, and where the attributes are
+    This should add an attribute to the item, and where the attributes are
     typed, it should be a string
+
+    Args:
+        item: The item or item name to add the attribute to
+        attribute_name: The name of the attribute
+        value: The value of the attribute
     """
     return _add_property(
-        object_,
+        item,
         attribute_name,
         "String",
         value,
     )
 
 
-def add_float_attribute(object_, attribute_name, value):
+def add_float_attribute(item: object, attribute_name: str, value: typing.Any) -> None:
     """
-    This should add an attribute to the object, and where the attributes are
+    This should add an attribute to the item, and where the attributes are
     typed, it should be a float
     """
     return _add_property(
-        object_,
+        item,
         attribute_name,
         "Float",
         value,
     )
 
 
-def set_attribute(object_, attribute_name, value):
+def set_value(item: object, attribute_name: str, value: typing.Any) -> None:
     """
-    This should set the attribute with the givne name on the given object to the
+    This should set the attribute with the given name on the given item to the
     given value
     """
-    if isinstance(value, str):
-        value = '"%s"' % value
+    # if isinstance(value, str):
+    #     value = '"%s"' % value
+    #
+    # else:
+    #     value = str(value)
 
-    else:
-        value = str(value)
+    # -- Start by trying for custom attributes
+    container_count = mxs.custAttributes.count(item)
+    for i in range(container_count + 1):
+        container = mxs.custAttributes.get(item, i)
+        if hasattr(container, attribute_name):
+            setattr(container, attribute_name, value)
+            return
 
+    # -- To reach here we're not dealing with a custom attribute
+    # -- so we try and set the item directly or through the baseObject
     try:
-        mxs.execute(f"{object_}.{attribute_name} = {value}")
+        item_name = items.get_name(item)
+        command = f"{item_name}.{attribute_name} = {value}"
+        mxs.execute(command)
 
     except RuntimeError:
         if 'baseObject' not in attribute_name:
             set_attribute(
-                object_,
+                item,
                 'baseObject.%s' % attribute_name,
                 value,
             )
 
 
-def get_attribute(object_, attribute_name):
+def get_value(item: object, attribute_name: str) -> typing.Any:
     """
-    This should look on the object for an attribute of this name and return its value
+    This should look on the item for an attribute of this name and return its value
     """
+    # -- Start by trying for custom attributes
+    container_count = mxs.custAttributes.count(item)
+    for i in range(container_count + 1):
+        container = mxs.custAttributes.get(item, i)
+        if hasattr(container, attribute_name):
+            return getattr(container, attribute_name)
+
     try:
-        return mxs.execute(f"{object_}.{attribute_name}")
+        return mxs.execute(f"{item}.{attribute_name}")
 
     except RuntimeError:
         if 'baseObject' not in attribute_name:
             return get_attribute(
-                object_,
+                item,
                 'baseObject.%s' % attribute_name,
             )
 
     return None
 
 
-def has_attribute(object_, attribute_name):
+def has_attribute(item: object, attribute_name: str) -> bool:
     """
-    This should check if an object has an attribute of this name
+    This should check if an item has an attribute of this name
     """
     return hasattr(
-        object_,
+        item,
         attribute_name,
     )
 
 
-def _add_property(object_, name, property_type, value=None):
+def _add_property(item, name, property_type, value=None):
 
     # -- Attributes are better exposed in pymxs rather than
     # -- MaxPlus, so the internals of this function will work
@@ -110,7 +137,7 @@ def _add_property(object_, name, property_type, value=None):
     existing_definition = None
 
     # -- Cycle over our attr defs on this object
-    attr_defs = mxs.custAttributes.getDefs(object_)
+    attr_defs = mxs.custAttributes.getDefs(item)
 
     for attr_def in attr_defs or list():
 
@@ -185,7 +212,7 @@ def _add_property(object_, name, property_type, value=None):
 
     else:
         mxs.custAttributes.add(
-            object_,
+            item,
             mxs.execute(updated_block),
         )
 

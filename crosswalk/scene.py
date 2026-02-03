@@ -41,7 +41,7 @@ def save_as(filepath: str):
     return
 
 
-def open(filepath: str, force: bool = False):
+def load(filepath: str, force: bool = False):
     """
     This will open the given filepath as the active scene
 

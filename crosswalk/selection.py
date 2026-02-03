@@ -4,20 +4,21 @@ implementation.
 """
 
 
-def select(object_: object or str):
+def select(item: object or str):
     """
-    This should select the given object
+    This should select the given item
 
     Args:
-        object_: The object or name of object to be selected
+        item: The item or name of object to be selected
     """
     return None
 
+
 def selected() -> list[object]:
     """
-    This should return the objects which are currently selected
+    This should return the items which are currently selected
 
     Returns:
-        A list of objects which are currently selected
+        A list of items which are currently selected
     """
     return list()
